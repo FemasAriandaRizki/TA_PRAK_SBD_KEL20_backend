@@ -4,6 +4,12 @@ const authenticateToken = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+// Middleware to log requests for debugging
+router.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 // Get All Mobil (hanya yang belum di-soft delete)
 router.get("/", authenticateToken, (req, res) => {
   const sql = "SELECT * FROM mobil WHERE deleted_at IS NULL";
@@ -122,9 +128,9 @@ router.put("/:id_mobil", authenticateToken, (req, res) => {
           .json({ message: "Error updating mobil", error: err.message });
       }
       if (result.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ message: "Mobil not found or already deleted" });
+        return res.status(404).json({
+          message: `Mobil with id ${id_mobil} not found or already deleted`,
+        });
       }
       res.json({ message: "Mobil updated successfully" });
     }
@@ -187,6 +193,11 @@ router.put("/restore/:id_mobil", authenticateToken, (req, res) => {
     }
     res.json({ message: "Mobil restored successfully" });
   });
+});
+
+// Catch-all for undefined routes
+router.use((req, res) => {
+  res.status(404).json({ message: "Endpoint not found" });
 });
 
 module.exports = router;
